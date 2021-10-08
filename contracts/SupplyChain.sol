@@ -2,10 +2,7 @@
 pragma solidity >=0.5.16 <0.9.0;
 
 contract SupplyChain {
-  address public owner;
-  uint public skuCount;
-
-  enum State { ForSale, Sold, Shipped, Received }
+  enum State {ForSale, Sold, Shipped, Received }
 
   struct Item {
     string name;
@@ -16,7 +13,11 @@ contract SupplyChain {
     address payable buyer;
   }
 
-  Item[] items;
+  address public owner;
+  uint public skuCount;
+
+
+  Item[] public items;
 
   /* 
    * Events
@@ -32,7 +33,7 @@ contract SupplyChain {
   }
 
   modifier verifyCaller (address _address) { 
-    require (payable(msg.sender) == _address);
+    require (address(uint160(msg.sender)) == _address);
     _;
   }
 
@@ -62,7 +63,7 @@ contract SupplyChain {
   // modifier shipped(uint _sku) 
   // modifier received(uint _sku) 
 
-  constructor() {
+  constructor() public {
     owner = msg.sender;
     // 1. Set the owner to the transaction sender
     // 2. Initialize the sku count to 0. Question, is this necessary?
@@ -74,8 +75,8 @@ contract SupplyChain {
       sku: skuCount,
       price: _price,
       state: State.ForSale,
-      seller: payable(msg.sender),
-      buyer: payable(address(0))
+      seller: address(uint160(msg.sender)),
+      buyer: address(uint160(address(0)))
     }));
 
     skuCount += 1;
@@ -115,7 +116,7 @@ contract SupplyChain {
   function buyItem(uint sku) public payable paidEnough(sku) {
     require(items[sku].state == State.ForSale);
 
-    items[sku].buyer = payable(msg.sender);
+    items[sku].buyer = address(uint160(msg.sender));
     items[sku].state = State.Sold;
     items[sku].seller.transfer(items[sku].price);
 
